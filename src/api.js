@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://tiendaclient.onrender.com", 
+  baseURL: "https://tiendaclient.onrender.com", // si esto es tu backend, perfecto
 });
 
 // Interceptor para enviar token si existe
