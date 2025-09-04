@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "../../src/assets/css/catalog.css";
 import Carousel from "./Carousel";
-import API from "../api"; // ✅ usar la instancia de axios
+import API from "../api"; // ✅ instancia de axios
 
 function Productos({ filtroTipo, filtroNombre }) {
   const [productos, setProductos] = useState([]);
@@ -16,14 +16,21 @@ function Productos({ filtroTipo, filtroNombre }) {
         const res = await API.get("/productos");
         let filtrados = res.data;
 
-        if (filtroTipo) {
+        // Filtro por tipo (con safe checks)
+        if (filtroTipo && filtroTipo.trim() !== "") {
           filtrados = filtrados.filter(
-            (p) => p.tipo?.nombre?.toLowerCase() === filtroTipo.toLowerCase()
+            (p) =>
+              p.tipo?.nombre &&
+              p.tipo.nombre.toLowerCase() === filtroTipo.toLowerCase()
           );
         }
-        if (filtroNombre) {
-          filtrados = filtrados.filter((p) =>
-            p.nombre.toLowerCase().includes(filtroNombre.toLowerCase())
+
+        // Filtro por nombre (con safe checks)
+        if (filtroNombre && filtroNombre.trim() !== "") {
+          filtrados = filtrados.filter(
+            (p) =>
+              p.nombre &&
+              p.nombre.toLowerCase().includes(filtroNombre.toLowerCase())
           );
         }
 
@@ -46,10 +53,11 @@ function Productos({ filtroTipo, filtroNombre }) {
     <div className="productos-grid">
       {productos.map((producto) => (
         <div key={producto._id} className="producto-card">
+          {/* ✅ Cloudinary ya devuelve URLs completas */}
           <Carousel imagenes={producto.imagenes || []} />
           <div className="producto-info">
             <h3>{producto.nombre}</h3>
-            <p>{producto.tipo?.nombre}</p>
+            <p>{producto.tipo?.nombre || "Sin categoría"}</p>
             <p>{producto.descripcion}</p>
             <p className="producto-precio">₡{producto.precio}</p>
           </div>

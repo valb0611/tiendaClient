@@ -6,7 +6,7 @@ function Carousel({ imagenes = [] }) {
   const intervalRef = useRef(null);
   const [hover, setHover] = useState(false);
 
-  // avanzar automáticamente solo si el mouse está encima
+  // Avanzar automáticamente solo si el mouse está encima
   useEffect(() => {
     if (hover && imagenes.length > 1) {
       intervalRef.current = setInterval(() => {
@@ -37,11 +37,7 @@ function Carousel({ imagenes = [] }) {
         {imagenes.map((img, idx) => (
           <div className="carousel-item" key={idx}>
             <img
-              src={
-                img.startsWith("blob") || img.startsWith("http")
-                  ? img
-                  : `https://tiendaclient.onrender.com${img}` // 🔑 agregar URL base
-              }
+              src={img} // ✅ ya es URL completa de Cloudinary o blob local
               alt={`imagen-${idx}`}
               onError={(e) => (e.target.src = "/default-image.png")}
             />

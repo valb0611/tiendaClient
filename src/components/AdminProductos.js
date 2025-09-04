@@ -1,9 +1,6 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import API from "../api";
-import "../../src/assets/css/admin.css";
-import Carousel from "./Carousel";
-
-const BACKEND_URL = "https://tiendaclient.onrender.com";
+import Carousel from "../components/Carousel";
 
 function AdminProductos() {
   const [productos, setProductos] = useState([]);
@@ -11,174 +8,156 @@ function AdminProductos() {
   const [form, setForm] = useState({
     nombre: "",
     descripcion: "",
-    precio: 0,
-    imagenes: [], // array para nuevas imágenes
-    tipo: ""
+    precio: "",
+    tipo: "",
+    imagenes: [],
   });
-  const [editando, setEditando] = useState(null);
-  const [msg, setMsg] = useState("");
+  const [editId, setEditId] = useState(null);
 
+  // Cargar productos y tipos al iniciar
   useEffect(() => {
-    cargarDatos();
+    cargarProductos();
+    cargarTipos();
   }, []);
 
-  const cargarDatos = async () => {
+  const cargarProductos = async () => {
     try {
-      const resProductos = await API.get("/productos");
-      const resTipos = await API.get("/tipos");
-      setProductos(resProductos.data);
-      setTipos(resTipos.data);
+      const res = await API.get("/productos");
+      setProductos(res.data);
     } catch (err) {
-      console.error("Error cargando datos:", err);
+      console.error("Error al cargar productos:", err);
     }
   };
 
-  const guardarProducto = async (e) => {
+  const cargarTipos = async () => {
+    try {
+      const res = await API.get("/tipos");
+      setTipos(res.data);
+    } catch (err) {
+      console.error("Error al cargar tipos:", err);
+    }
+  };
+
+  // Manejar inputs de texto
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // Manejar subida de imágenes
+  const handleFileChange = (e) => {
+    setForm({ ...form, imagenes: Array.from(e.target.files) });
+  };
+
+  // Enviar formulario (crear/editar)
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setMsg("");
     try {
-      const formData = new FormData();
-      formData.append("nombre", form.nombre);
-      formData.append("descripcion", form.descripcion);
-      formData.append("precio", form.precio);
-      formData.append("tipo", form.tipo);
+      const fd = new FormData();
+      fd.append("nombre", form.nombre);
+      fd.append("descripcion", form.descripcion);
+      fd.append("precio", form.precio);
+      fd.append("tipo", form.tipo);
+      form.imagenes.forEach((img) => fd.append("imagenes", img));
 
-      if (form.imagenes && form.imagenes.length > 0) {
-        for (let i = 0; i < form.imagenes.length; i++) {
-          formData.append("imagenes", form.imagenes[i]);
-        }
-      }
-
-      if (editando) {
-        await API.put(`/productos/${editando}`, formData, {
+      if (editId) {
+        await API.put(`/productos/${editId}`, fd, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        setMsg("Producto actualizado ✅");
       } else {
-        await API.post("/productos", formData, {
+        await API.post("/productos", fd, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        setMsg("Producto agregado ✅");
       }
 
-      setForm({ nombre: "", descripcion: "", precio: 0, imagenes: [], tipo: "" });
-      setEditando(null);
-      cargarDatos();
+      setForm({ nombre: "", descripcion: "", precio: "", tipo: "", imagenes: [] });
+      setEditId(null);
+      cargarProductos();
     } catch (err) {
-      console.error(err);
-      setMsg("Error al guardar producto ❌");
+      console.error("Error al guardar producto:", err);
     }
   };
 
-  const editarProducto = (producto) => {
-    setForm({
-      nombre: producto.nombre,
-      descripcion: producto.descripcion,
-      precio: producto.precio,
-      imagenes: producto.imagenes || [],
-      tipo: producto.tipo?._id || ""
-    });
-    setEditando(producto._id);
-  };
-
-  const eliminarProducto = async (id) => {
-    if (!window.confirm("¿Seguro que deseas eliminar este producto?")) return;
+  // Eliminar producto
+  const eliminar = async (id) => {
+    if (!window.confirm("¿Seguro que quieres eliminar este producto?")) return;
     try {
       await API.delete(`/productos/${id}`);
-      setMsg("Producto eliminado ✅");
-      cargarDatos();
+      cargarProductos();
     } catch (err) {
-      console.error(err);
-      setMsg("Error al eliminar producto ❌");
+      console.error("Error al eliminar producto:", err);
     }
+  };
+
+  // Editar producto
+  const editar = (p) => {
+    setEditId(p._id);
+    setForm({
+      nombre: p.nombre,
+      descripcion: p.descripcion,
+      precio: p.precio,
+      tipo: p.tipo?._id || "",
+      imagenes: p.imagenes || [],
+    });
   };
 
   return (
-    <div className="admin-container">
-      <h2>Gestión de Productos</h2>
+    <div>
+      <h2>Administrar Productos</h2>
 
-      <div className="form-preview-container">
-        <form className="admin-form" onSubmit={guardarProducto}>
-          <input
-            type="text"
-            placeholder="Nombre"
-            value={form.nombre}
-            onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-            required
+      {/* Formulario */}
+      <form onSubmit={handleSubmit}>
+        <input
+          name="nombre"
+          placeholder="Nombre"
+          value={form.nombre}
+          onChange={handleChange}
+        />
+        <textarea
+          name="descripcion"
+          placeholder="Descripción"
+          value={form.descripcion}
+          onChange={handleChange}
+        />
+        <input
+          name="precio"
+          type="number"
+          placeholder="Precio"
+          value={form.precio}
+          onChange={handleChange}
+        />
+        <select name="tipo" value={form.tipo} onChange={handleChange}>
+          <option value="">-- Selecciona un tipo --</option>
+          {tipos.map((t) => (
+            <option key={t._id} value={t._id}>
+              {t.nombre}
+            </option>
+          ))}
+        </select>
+        <input type="file" multiple onChange={handleFileChange} />
+
+        {/* Vista previa de imágenes (locales o Cloudinary) */}
+        {form.imagenes.length > 0 && (
+          <Carousel
+            imagenes={form.imagenes.map((img) =>
+              img instanceof File ? URL.createObjectURL(img) : img
+            )}
           />
-          <input
-            type="text"
-            placeholder="Descripción"
-            value={form.descripcion}
-            onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
-            required
-          />
-          <input
-            type="number"
-            placeholder="Precio"
-            value={form.precio}
-            onChange={(e) => setForm({ ...form, precio: e.target.value })}
-            required
-          />
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={(e) => setForm({ ...form, imagenes: Array.from(e.target.files) })}
-          />
+        )}
 
-          <select
-            value={form.tipo}
-            onChange={(e) => setForm({ ...form, tipo: e.target.value })}
-            required
-          >
-            <option value="">Selecciona un tipo</option>
-            {tipos.map((t) => (
-              <option key={t._id} value={t._id}>{t.nombre}</option>
-            ))}
-          </select>
-          <button type="submit">{editando ? "Actualizar" : "Agregar"} Producto</button>
-        </form>
-
-        {/* Vista previa del producto */}
-        <div className="producto-card">
-          {form.imagenes.length > 0 && (
-            <Carousel
-              imagenes={form.imagenes.map((img) =>
-                img instanceof File ? URL.createObjectURL(img) : `${BACKEND_URL}${img}`
-              )}
-            />
-          )}
-          <div className="producto-info">
-            <h3>{form.nombre || "Nombre del producto"}</h3>
-            <p>{tipos.find((t) => t._id === form.tipo)?.nombre || "Categoría"}</p>
-            <p className="producto-descripcion">{form.descripcion || "Descripción"}</p>
-            <p className="producto-precio">₡{form.precio || "0"}</p>
-          </div>
-        </div>
-      </div>
-
-      {msg && <p style={{ marginTop: "10px", color: msg.includes("❌") ? "#d9534f" : "#28a745" }}>{msg}</p>}
-
-      <hr />
+        <button type="submit">{editId ? "Actualizar" : "Crear"}</button>
+      </form>
 
       {/* Lista de productos */}
-      <div className="productos-grid">
+      <div className="productos-lista">
         {productos.map((p) => (
           <div key={p._id} className="producto-card">
-            <Carousel
-              imagenes={(p.imagenes || []).map(img => `${BACKEND_URL}${img}`)}
-            />
-            <div className="producto-info">
-              <h3>{p.nombre}</h3>
-              <p>{p.tipo?.nombre}</p>
-              <p>{p.descripcion}</p>
-              <p className="producto-precio">₡{p.precio}</p>
-            </div>
-            <div className="admin-actions">
-              <button className="editar" onClick={() => editarProducto(p)}>Editar</button>
-              <button className="eliminar" onClick={() => eliminarProducto(p._id)}>Eliminar</button>
-            </div>
+            <h3>{p.nombre}</h3>
+            <Carousel imagenes={p.imagenes || []} />
+            <p>{p.descripcion}</p>
+            <p>₡{p.precio}</p>
+            <p>Tipo: {p.tipo?.nombre}</p>
+            <button onClick={() => editar(p)}>Editar</button>
+            <button onClick={() => eliminar(p._id)}>Eliminar</button>
           </div>
         ))}
       </div>
