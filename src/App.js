@@ -1,24 +1,24 @@
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import CatalogLayout from "./layouts/catalog";
+import DashboardLayout from "./layouts/dashboard";
+import CatalogOnly from "./layouts/catalogOnly";
+import DashboardCatalog from "./layouts/dashboardCatalog"
+
+
+
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<CatalogLayout />} />
+        <Route path="/catalogo/:tipo?" element={<CatalogOnly />} />
+        <Route path="/dashboard" element={<DashboardLayout />} />
+        <Route path="*" element={<Navigate to="/" />} />
+        <Route path="/dashboardCatalog" element={<DashboardCatalog />} />
+  
+      </Routes>
+    </Router>
   );
 }
 
