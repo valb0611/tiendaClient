@@ -1,6 +1,0 @@
-# Todas las rutas principales van a index.html para que React maneje la navegación
-/                 /index.html   200
-/catalogo/*       /index.html   200
-/dashboard/*      /index.html   200
-/dashboardCatalog/* /index.html 200
-/*                /index.html   200
