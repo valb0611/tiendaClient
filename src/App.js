@@ -11,9 +11,10 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<DashboardLayout />} />
+        <Route path="/" element={<CatalogLayout />} />
+        <Route path="/catalogo/:tipo?" element={<CatalogOnly />} />
         <Route path="*" element={<Navigate to="/" />} />
-        <Route path="/dashboardCatalog" element={<DashboardCatalog />} />
+      
   
       </Routes>
     </Router>
